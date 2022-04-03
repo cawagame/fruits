@@ -2,12 +2,15 @@ import pygame
 from pygame.locals import  *
 import os
 import random
+import itertools
 
 #-----------------  appuits Simple
 mouPres=[0,0,0]
 
 #--------------- selct fruits
 selFruit =[False,False,False]  #pos sele1,pos sele2, code act
+selDepla ={}
+
 
 #---------------  init variable de basse
 sfruits={}
@@ -28,8 +31,9 @@ def dec2Selc(func):         #calcule la distance des 2 fruits
 def dec2SelcXY(func):
     def f(*args):
         x,y = args[0]
-        if x==0 and y==0:selFruit[2]=-10
-        elif abs(x)>0 and abs(y)>0:selFruit[2]=-20
+        z =abs(x)+abs(y)
+        if z==0:selFruit[2]=-10
+        elif z>1:selFruit[2]=-20
         else:selFruit[2] =(x,y)
         return func (args[0])
     return f
@@ -119,19 +123,36 @@ def DisplRect():
 def Selc2Fruits(z=False):
     return z
 def Selc3Case():
-    if mouPres != [0,0,0]:return
+    if mouPres != [0,0,0]:return -100
     xy =selFruit[2]
     if xy ==-10:
         mfruits[selFruit[0]]['alfa']=255
         selFruit[0] =False
         selFruit[1] = False
         selFruit[2] = False
+        return 0
     elif xy==-20:
         mfruits[selFruit[0]]['alfa'] = 255
         selFruit[0] = selFruit[1]
         selFruit[1] = False
         selFruit[2] = False
-    print(xy)
+        return 0
+
+    x,y =xy
+    if x==0 and y==1:
+        p0=mfruits[selFruit[0]]['surf']
+        p1 = mfruits[selFruit[1]]['surf']
+        mfruits[selFruit[0]]['surf']    =p1
+        mfruits[selFruit[1]]['surf'] = p0
+
+        mfruits[selFruit[0]]['alfa'] = 255
+        mfruits[selFruit[1]]['alfa'] = 255
+        selFruit[0] = False
+        selFruit[1] = False
+        selFruit[2] = False
+
+
+    return xy
 
 
 
