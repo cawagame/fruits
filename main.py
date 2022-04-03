@@ -139,19 +139,17 @@ def Selc3Case():
         return 0
 
     x,y =xy
-    if x==0 and y==1:
-        p0=mfruits[selFruit[0]]['surf']
-        p1 = mfruits[selFruit[1]]['surf']
-        mfruits[selFruit[0]]['surf']    =p1
-        mfruits[selFruit[1]]['surf'] = p0
+    print (x,y)
+    p0=mfruits[selFruit[0]]['surf']
+    p1 = mfruits[selFruit[1]]['surf']
+    mfruits[selFruit[0]]['surf']    =p1
+    mfruits[selFruit[1]]['surf'] = p0
 
-        mfruits[selFruit[0]]['alfa'] = 255
-        mfruits[selFruit[1]]['alfa'] = 255
-        selFruit[0] = False
-        selFruit[1] = False
-        selFruit[2] = False
-
-
+    mfruits[selFruit[0]]['alfa'] = 255
+    mfruits[selFruit[1]]['alfa'] = 255
+    selFruit[0] = False
+    selFruit[1] = False
+    selFruit[2] = False
     return xy
 
 
