@@ -1,256 +1,110 @@
 import pygame
-from pygame.locals import  *
-import os
-import random
-import threading
-import itertools
-#------------ voisin
-voisinCheck =[]
-voisinSuite =[]
-voisinGroupe =[]
-#-----------------  appuits Simple
-mouPres=[0,0,0]
-
-#--------------- selct fruits
-selFruit =[False,False,False]  #pos sele1,pos sele2, code act
-selDepla ={}
-
+from pygame.locals import *
+import os,random
+import MoussePresse
+import JfruitsVoisin
 
 #---------------  init variable de basse
 sfruits={}
 gfruits =[]
 mfruits ={}     #matrix fruits
 supfruits =pygame.surface.Surface((100,100))
-codeDirect =[(0,-1),(1,0),(0,1),(-1,0)]
-#-------------- init varaible move fruits
-mvRect =[]  #surface, position arriver, postion move, vitesse
+
+selFruit =[False,False,False]  #pos sele1,pos sele2, code act
+moveRect =[]
+voiFruits=[]
 
 
-
-
-#----------------------- select 2 frurt ------------
-def dec2Selc(func):         #calcule la distance des 2 fruits
+def decNomFruits(func):
     def f(*args):
-        xa,ya =selFruit[0]
-        xb,yb =selFruit[1]
-        x,y =xa-xb,ya-yb
-        return func ((x,y))
-    return f
-
-def dec2SelcXY(func):
-    def f(*args):
-        x,y = args[0]
-        z =abs(x)+abs(y)
-        if z==0:selFruit[2]=-10
-        elif z>1:selFruit[2]=-20
-        else:selFruit[2] =(x,y)
-        return func (args[0])
-    return f
-
-
-
-#------------------------  decorateur --------------
-def decnomFruits(func):
-    def f(*args):
-        out =False
-        x =func(*args)
-        if x:out =x
-        return out
-    return f
-
-
-def decalfa100(func):
-    def f(*args):
-        for ind, ele in enumerate(mfruits.keys()):
-            mfruits[ele]['alfa'] = 100
-        return func(args[0])
-    return f
-
-def decSelFruits(func):
-    def f(*args):
-        if selFruit[0] and mouPres[0]==1:selFruit[1] =args[0]
-        elif not selFruit[0] and mouPres[0]==1:selFruit[0]=args[0]
-        return func(args[0])
+        x=func(*args)
+        if x:
+            xp,yp =x
+            xp0,yp0 =int(xp/100),int(yp/100)
+            x=(xp0,yp0)
+        return x
     return f
 
 
 
 
-#------------------------ decorateir parametres
-def decmousePres(pr):
-    def dec(func):
-        def f(*args):
-            if type(args[0]) ==type(10):
-                return func(args[0])
-            out = args[0]
-            if args[0][pr]==True:
-                mouPres[pr] +=1
-                out=pr
-            return func(out)
-        return f
-    return dec
-
-def declfaxx(alfa,posM):
-    def dec(func):
-        def f(*args):
-            x,y =args[0]
-            xp,yp =posM
-            mfruits[(x+xp,y+yp)]['alfa'] = 100
-            return func(args[0])
-        return f
-    return dec
-
-
-#*********************** class mouse pressed  *************
-@decmousePres(2)
-@decmousePres(0)
-@decnomFruits   #return
-def MousePres(pr:tuple=None):
-    out =False
-    if type(pr)==type(10):
-        x,y =pygame.mouse.get_pos()
-        out =(int(x/100),int(y/100))
-    return out
-
-#*********************** class select alpha case Fruits *************
-@declfaxx(100,(0,0))
-@decSelFruits
-def FruitSelect(nomfruit:tuple=False):
-    return nomfruit
-
-#*********************** class display Fruits *************
 def DisplRect():
+    rootFruits.fill((0,0,0,0))
     for ind,ele in  enumerate(mfruits.keys()):
         x,y =ele
         v = mfruits[ele]
-        rootFruits.blit(sfruits[v['surf']],(x*100,y*100))
-        if v["clsE"]:cl=[0,250,250,v['alfa']]
-        else:cl=[255,0,0,v['alfa']]
-        pygame.draw.rect(rootSelCase,cl,(x*100,y*100,100,100),0)
-        #if v['alfa']!=0:print(v)
-    root.blit(rootFruits,(0,0))
-    root.blit(rootSelCase,(0,0))
+        if v['surf']:rootFruits.blit(sfruits[v['surf']],(x*100,y*100))
 
+@decNomFruits
+def MousePre():
+    MoussePresse.MousePre()
+    if MoussePresse.mouseCodePres==[2,0,10]:
+        return pygame.mouse.get_pos()
+    return False
 
+def SelFruit2(z=False):
+    if selFruit[0] ==False:
+        selFruit[0] = z
+        pygame.draw.rect(rootSelCase,(255,200,100,100),(z[0]*100,z[1]*100,100,100),0)
+    else:
+        selFruit[1]=z
+        pygame.draw.rect(rootSelCase, (255, 200, 150, 100), (z[0] * 100, z[1] * 100, 100, 100), 0)
+
+    if selFruit[1]:
+        x0,y0 =selFruit[0]
+        x1,y1 =selFruit[1]
+        x,y =x0-x1,y0-y1
+        xy =abs(x)+abs(y)
+        if xy==1:
+            rootSelCase.fill((0, 0, 0, 0))
+            z = selFruit[0]
+            pygame.draw.rect(rootFruits, (0, 200, 150, 255), (z[0] * 100, z[1] * 100, 100, 100), 0)
+            xp,yp =int(x0*100/20),int(y0*100/20)
+            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp,yp),20,(x1-x0,y1-y0),5,0])
+
+            z = selFruit[1]
+            xp, yp = int(x1 * 100 / 20), int(y1 * 100 / 20)
+            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp, yp), 20, (x, y), 5, 0])
+            pygame.draw.rect(rootFruits, (0, 200, 150, 255), (z[0] * 100, z[1] * 100, 100, 100), 0)
+            selFruit[0] = False
+            selFruit[1] = False
+            selFruit[2] = False
+
+        elif xy ==0:
+            rootSelCase.fill((0,0,0,0))
+            selFruit[0] =False
+            selFruit[1] =False
+            selFruit[2] =False
+        else:
+            rootSelCase.fill((0,0,0,0))
+            z = selFruit[1]
+            selFruit[0] = selFruit[1]
+            selFruit[1] = False
+            selFruit[2] = False
+            pygame.draw.rect(rootSelCase, (255, 200, 100, 100), (z[0] * 100, z[1] * 100, 100, 100), 0)
+    return selFruit
 def MoveRect():
-    ""
-    for ind,ele in enumerate(mvRect):
-        #print(ele)
-        x,y     =ele[1]
-        xc,yc   =ele[2]
-
-        x100,y100 =x*100,y*100
-        x20,y20 =x100/ele[3],y100/ele[3]
-        xm,ym   =x20*20+(20*ele[5])*xc,y20*20+(20*ele[5])*yc
-        rootFruitsSel.blit(sfruits[ele[0]],(xm,ym))
-        mvRect[ind][5] +=1
-
-    if ele[5]> ele[4]:
-        voisinCheck.append(mvRect[0][1])
-        voisinCheck.append(mvRect[1][1])
-
-        mfruits[mvRect[1][1]]['surf']=mvRect[0][0]
-        mfruits[mvRect[0][1]]['surf'] = mvRect[1][0]
-        mfruits[mvRect[1][1]]['alfa'] = 0
-        mfruits[mvRect[0][1]]['alfa'] = 0
-        mvRect.pop(0)
-        mvRect.pop(0)
-
-
-    root.blit(rootFruitsSel,(0,0))
-
-
-#*********************** class select case Fruits *************
-@dec2Selc
-@dec2SelcXY
-def Selc2Fruits(z=False):
-
-    return z
-def Selc3Case():
-    if mouPres != [0,0,0]:return -100
-    xy =selFruit[2]
-    print (xy,selFruit)
-    if xy==10:return 10
-    if xy ==-10:
-        mfruits[selFruit[0]]['alfa']=0
-        selFruit[0] =False
-        selFruit[1] = False
-        selFruit[2] = False
-        return 0
-    elif xy==-20:
-        print(selFruit)
-        mfruits[selFruit[0]]['alfa'] = 0
-        selFruit[0] = selFruit[1]
-        selFruit[1] = False
-        selFruit[2] = False
-        return 0
-
-
-    p0=mfruits[selFruit[0]]['surf']
-    p1 = mfruits[selFruit[1]]['surf']
-
-    mfruits[selFruit[0]]['alfa']    = 100
-    mfruits[selFruit[1]]['alfa']    = 100
-    #print(p1,selFruit[1],xy)
-    xyInv=(xy[0]*-1,xy[1]*-1)
-
-    mvRect.append([p0, selFruit[0], xyInv, 20, 5, 0])
-    mvRect.append([p1,selFruit[1],xy,20,5,0])
-    selFruit[0] = False
-    selFruit[1] = False
-    selFruit[2] = False
-
-    #print(xy)
-    return xy
-def VoisinGrille(g):
-    out =[]
-    for ind,ele in enumerate(g):
-        x,y =ele
-        print (ele)
-        if 0<=x<=7 and 0<=y<=7:out.append(ele)
-    return out
-def VoisinCode(cdir):
-    xv,yv =cdir
-    out =[]
-    for ind,ele in enumerate(codeDirect):
-        xc,yc=ele
-        x,y =xv+xc,yv+yc
-        out.append((x,y))
-    return out
-def VoisinFruits(fr0,voisin):
-    out  =[]
-    sfr =mfruits[fr0]['surf']
-    for ind,ele in enumerate(voisin):
-        sfrv =mfruits[ele]['surf']
-        if sfr==sfrv:out.append(ele)
-    return out
-def VoisinColor(fr):
-    for ind,ele in enumerate(fr):
-        mfruits[ele]['alfa'] = 50
-        mfruits[ele]['clsE'] = True
-
-
-def voisin(z=(0,0)):
-    global voisinCheck,voisinSuite
-    if voisinCheck!=[]:
-        voisinSuite =voisinSuite+voisinCheck
-        voisinCheck=[]
-    out =[]
-    for ind,ele in enumerate(voisinSuite):
-        v0 =VoisinCode(ele)
-        v1 =VoisinGrille(v0)
-        v2 =VoisinFruits(ele,v1)
-        if v2 !=[]:
-            VoisinColor(v2+[ele])
-            print (ele,'------')
-
-
-    voisinSuite=[]
-
-
-
-
-
+    eff =[]
+    for ind,ele in enumerate(moveRect):
+        xm,ym =ele[4]
+        p =ele[3]
+        x,y =(ele[2][0]*p)+(ele[6]*xm*p),(ele[2][1]*p)+(ele[6]*ym*p)
+        ele[0].blit(sfruits[ele[1]],(x,y))
+        moveRect[ind][6] +=1
+        if moveRect[ind][6]>moveRect[ind][5]:eff.append(ind)
+    eff.reverse()
+    for i in eff:
+        ele =moveRect[i]
+        xm, ym = ele[4]
+        p = ele[3]
+        x, y = (ele[2][0] * p) + (ele[6] * xm * p), (ele[2][1] * p) + (ele[6] * ym * p)
+        xn,yn =int(x/100),int(y/100)
+        if xm==-1:xn+=1
+        if ym == -1: yn += 1
+        voiFruits.append((xn,yn))
+        mfruits[(xn,yn)]['surf']=ele[1]
+        rootFruits.blit(sfruits[ele[1]],(xn*100,yn*100))
+        moveRect.pop(i)
 #--------------- chargement les image en surface
 lfruits =os.listdir("fruits")               #liste image fruits
 for ind,ele in enumerate(lfruits):          #load les images en surface
@@ -263,43 +117,38 @@ for i in range(64):
 ifr=0
 for i in range (8):
     for ib in range(8):
-        mfruits[(ib,i)]={"surf":gfruits[ifr],"alfa":0,"clsE":False}
+        mfruits[(ib,i)]={"surf":gfruits[ifr],"alfa":0,"clsE":False,'pos':(ib,i)}
         ifr +=1
 
-
-
 pygame.init()
-root =pygame.display.set_mode([800,800])
-rootFruits =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
+root =pygame.display.set_mode([800,800])                            #maitre
+rootCl  =(0,255,200)
+rootFruits =pygame.Surface([800,8000], pygame.SRCALPHA, 32)         #mfruirs
 rootFruits.convert_alpha()
-rootFruitsSel =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
-rootFruitsSel.convert_alpha()
 rootSelCase =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
+rootSelCase.convert_alpha()
+rootSelMv =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
+rootSelMv.convert_alpha()
 
+DisplRect()
 
-
-diimde =[]
 while 1:
+    #root.fill((0,150,150))
+    rootSelMv.fill((0,0,0,0))
 
-    if selFruit[2]==10:voisin()
-    if selFruit[1]:Selc2Fruits()
-    if selFruit[2]:Selc3Case()
-    voisin()
-
-
-    root.fill((255,255,0))
-    DisplRect()
-    if mvRect!=[]:MoveRect()
+    JfruitsVoisin.Voisin(voiFruits,mfruits)
+    voiFruits=[]
+    MoveRect()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+    if selFruit[2]:print (selFruit[2])
+    nomF =MousePre()
+    if nomF:SelFruit2(nomF)
 
-    nomFruits=MousePres(pygame.mouse.get_pressed())
-    if nomFruits:FruitSelect(nomFruits)
-    else:mouPres =[0,0,0]
 
+    root.blit(rootFruits,(0,0))
+    root.blit(rootSelCase,(0,0))
+    root.blit(rootSelMv,(0,0))
     pygame.display.update()
     pygame.time.wait(60)
-
-
-
