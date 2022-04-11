@@ -1,8 +1,10 @@
 import pygame
 from pygame.locals import *
+
 import os,random
 import MoussePresse
 import JfruitsVoisin
+import MoveRectS
 
 #---------------  init variable de basse
 sfruits={}
@@ -83,36 +85,42 @@ def SelFruit2(z=False):
             selFruit[2] = False
             pygame.draw.rect(rootSelCase, (255, 200, 100, 100), (z[0] * 100, z[1] * 100, 100, 100), 0)
     return selFruit
-def MoveRect():
-    eff =[]
-    for ind,ele in enumerate(moveRect):
-        xm,ym =ele[4]
-        p =ele[3]
-        x,y =(ele[2][0]*p)+(ele[6]*xm*p),(ele[2][1]*p)+(ele[6]*ym*p)
-        ele[0].blit(sfruits[ele[1]],(x,y))
-        moveRect[ind][6] +=1
-        if moveRect[ind][6]>moveRect[ind][5]:eff.append(ind)
-    eff.reverse()
-    for i in eff:
-        ele =moveRect[i]
-        xm, ym = ele[4]
-        p = ele[3]
-        x, y = (ele[2][0] * p) + (ele[6] * xm * p), (ele[2][1] * p) + (ele[6] * ym * p)
-        xn,yn =int(x/100),int(y/100)
-        if xm==-1:xn+=1
-        if ym == -1: yn += 1
-        voiFruits.append((xn,yn))
-        mfruits[(xn,yn)]['surf']=ele[1]
-        rootFruits.blit(sfruits[ele[1]],(xn*100,yn*100))
-        moveRect.pop(i)
+
+
+def Voissin():
+    lesVoissin=JfruitsVoisin.Voisin(voiFruits, mfruits)
+    if lesVoissin!=[]:
+        for ide,ele in enumerate(lesVoissin):
+            x,y =ele
+            z=ele
+            g =10
+            xp,yp =int(x*100/g),int(y*100/g)
+            pygame.draw.rect(rootSelCase,(125,125,255,130),(x*100,y*100,100,100),0)
+
+            pygame.draw.rect(rootFruits,(12,150,12),(x*100,y*100,100,100),0)
+            moveRect.append([rootSelMv, mfruits[z]['surf'], (xp, yp), g, (0,1), 40, 0])
+            mfruits[z]['surf'] = -1
+
+def MoveRecst():
+    MoveRectS.moveRect = moveRect
+    MoveRectS.sfruits = sfruits
+    MoveRectS.voiFruits = voiFruits
+    MoveRectS.mfruits = mfruits
+    MoveRectS.rootFruits = rootFruits
+    eff=MoveRectS.MoveRect()
+    MoveRectS.MoveRectEff(eff,None)
+
 #--------------- chargement les image en surface
 lfruits =os.listdir("fruits")               #liste image fruits
 for ind,ele in enumerate(lfruits):          #load les images en surface
     sfruits[ele] =pygame.image.load("fruits/"+ele)
 
+
 #--------------- cress la grill 8*8=64
 for i in range(64):
     gfruits.append(random.choice(lfruits))
+
+
 #------------- metres dans la matrice fruits
 ifr=0
 for i in range (8):
@@ -123,10 +131,13 @@ for i in range (8):
 pygame.init()
 root =pygame.display.set_mode([800,800])                            #maitre
 rootCl  =(0,255,200)
+
 rootFruits =pygame.Surface([800,8000], pygame.SRCALPHA, 32)         #mfruirs
 rootFruits.convert_alpha()
+
 rootSelCase =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
 rootSelCase.convert_alpha()
+
 rootSelMv =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
 rootSelMv.convert_alpha()
 
@@ -136,9 +147,9 @@ while 1:
     #root.fill((0,150,150))
     rootSelMv.fill((0,0,0,0))
 
-    JfruitsVoisin.Voisin(voiFruits,mfruits)
+    Voissin()
     voiFruits=[]
-    MoveRect()
+    MoveRecst()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()

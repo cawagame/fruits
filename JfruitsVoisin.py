@@ -24,11 +24,10 @@ def decFruVoisin(func):
 def decIdemVoissin(func):
     def f(*args):
         fs =args[1][args[0]]['surf']
-        out =[args[0]]
+        out =[]
         if args[2][1].count(fs):
             for ind,ele in enumerate(args[2][1]):
                 if ele==fs:out.append(args[2][0][ind])
-        if len(out)==1:out=[]
         return func(*args[:2],out)
     return f
 
@@ -42,13 +41,37 @@ def SimpVoisin(vfs,mfruits,cd=False):
     return out
 
 @decIdemVoissin
-def IdemVoisin(vfs,mfruits,lvoisin):
+def IdemVoisin(vfs,mfruits,lvoisin=[]):
     return lvoisin
+
+def BouclVoisin(c0,mfruits):
+    outV =[c0]
+    i =0
+    while 1:
+        cible =outV[i]
+        vs =SimpVoisin(cible,mfruits)
+        vt =IdemVoisin(cible,mfruits,vs)
+        for ind,ele in enumerate(vt):
+            if outV.count(ele) ==0:outV.append(ele)
+        i+=1
+        if i>len(outV)-1:break
+    return outV
 
 
 
 def Voisin(vF,mfruits,cd=False):
+    outV0 =[]
+    outV1 =[]
     if vF!=[]:
         for ind,ele in enumerate(vF):
-            voisiS=SimpVoisin(ele,mfruits)
-            print (IdemVoisin(ele,mfruits,voisiS))
+            out =BouclVoisin(ele,mfruits)
+            if len(out)==1:out =[False]
+            outV0.append(out)
+        for ind,ele in enumerate(outV0):
+            for ind0,ele0 in enumerate(ele):
+                if outV1.count(ele0)==0:
+                    if ele0:outV1.append(ele0)
+    return outV1
+
+            #voisiS=SimpVoisin(ele,mfruits)
+            #print (IdemVoisin(ele,mfruits,voisiS))
