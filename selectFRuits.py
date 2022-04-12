@@ -58,6 +58,7 @@ def Selc2Fruits(z=False):
 def Selc3Case(z=selFruit):
     out =False
     if type(selFruit[2])==type(()):
+
         g   =20 #grille 20
         x0,y0 =selFruit[0]
         x01,y01 =int((x0*100)/g),int((y0*100)/g)
@@ -74,7 +75,6 @@ def Selc3Case(z=selFruit):
 
         mfruits[selFruit[0]]['surf'] = False
         mfruits[selFruit[1]]['surf'] = False
-        print (mvRect,"---")
         selFruit[0] =False
         selFruit[1] = False
         selFruit[2] = False

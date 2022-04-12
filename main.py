@@ -5,11 +5,12 @@ import os,random
 import MoussePresse
 import JfruitsVoisin
 import MoveRectS
-
+import DescendreMove
 #---------------  init variable de basse
 sfruits={}
 gfruits =[]
 mfruits ={}     #matrix fruits
+descMv=[]       #descendre
 supfruits =pygame.surface.Surface((100,100))
 
 selFruit =[False,False,False]  #pos sele1,pos sele2, code act
@@ -35,7 +36,9 @@ def DisplRect():
     for ind,ele in  enumerate(mfruits.keys()):
         x,y =ele
         v = mfruits[ele]
-        if v['surf']:rootFruits.blit(sfruits[v['surf']],(x*100,y*100))
+        if type(v['surf'])==type(''):
+            if v['surf']:rootFruits.blit(sfruits[v['surf']],(x*100,y*100))
+
 
 @decNomFruits
 def MousePre():
@@ -57,17 +60,20 @@ def SelFruit2(z=False):
         x1,y1 =selFruit[1]
         x,y =x0-x1,y0-y1
         xy =abs(x)+abs(y)
+        g=20
         if xy==1:
             rootSelCase.fill((0, 0, 0, 0))
             z = selFruit[0]
             pygame.draw.rect(rootFruits, (0, 200, 150, 255), (z[0] * 100, z[1] * 100, 100, 100), 0)
-            xp,yp =int(x0*100/20),int(y0*100/20)
-            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp,yp),20,(x1-x0,y1-y0),5,0])
+            xp,yp =int(x0*100/g),int(y0*100/g)
+            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp,yp),g,(x1-x0,y1-y0),5,0,1])
+            mfruits[z]['surf'] = 0
 
             z = selFruit[1]
-            xp, yp = int(x1 * 100 / 20), int(y1 * 100 / 20)
-            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp, yp), 20, (x, y), 5, 0])
+            xp, yp = int(x1 * 100 / g), int(y1 * 100 / g)
+            moveRect.append([rootSelMv,mfruits[z]['surf'],(xp, yp), g, (x, y), 5, 0,1])
             pygame.draw.rect(rootFruits, (0, 200, 150, 255), (z[0] * 100, z[1] * 100, 100, 100), 0)
+            mfruits[z]['surf'] = 0
             selFruit[0] = False
             selFruit[1] = False
             selFruit[2] = False
@@ -98,7 +104,7 @@ def Voissin():
             pygame.draw.rect(rootSelCase,(125,125,255,130),(x*100,y*100,100,100),0)
 
             pygame.draw.rect(rootFruits,(12,150,12),(x*100,y*100,100,100),0)
-            moveRect.append([rootSelMv, mfruits[z]['surf'], (xp, yp), g, (0,1), 40, 0])
+            moveRect.append([rootSelMv, mfruits[z]['surf'], (xp, yp), g, (0,1), 100000, 0,0])
             mfruits[z]['surf'] = -1
 
 def MoveRecst():
@@ -108,7 +114,24 @@ def MoveRecst():
     MoveRectS.mfruits = mfruits
     MoveRectS.rootFruits = rootFruits
     eff=MoveRectS.MoveRect()
+    if eff!=[]:DisplRect()
     MoveRectS.MoveRectEff(eff,None)
+
+def Descandre():
+    rootSelDesc.fill((0,0,0,0))
+    descMv = DescendreMove.Descendre(mfruits)
+
+    g=50
+
+    for ind,ele in enumerate(descMv):
+        print (ele)
+        x0, y0 = ele
+        xp, yp = int(x0 * 100 / g), int(y0 * 100 / g)
+        moveRect.append([rootSelDesc,mfruits[ele]['surf'],(xp,yp),g,(0,1),2,0,ele])   #ind 7  0 no voisin   1 voissin 2 no voisin remets sur la grille
+        mfruits[ele]['surf'] = 2
+
+    descMv=[]
+
 
 #--------------- chargement les image en surface
 lfruits =os.listdir("fruits")               #liste image fruits
@@ -141,10 +164,13 @@ rootSelCase.convert_alpha()
 rootSelMv =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
 rootSelMv.convert_alpha()
 
+rootSelDesc =pygame.Surface([800,8000], pygame.SRCALPHA, 32)
+rootSelDesc.convert_alpha()
+
 DisplRect()
 
 while 1:
-    #root.fill((0,150,150))
+    root.fill((0,150,150))
     rootSelMv.fill((0,0,0,0))
 
     Voissin()
@@ -153,7 +179,7 @@ while 1:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-    if selFruit[2]:print (selFruit[2])
+
     nomF =MousePre()
     if nomF:SelFruit2(nomF)
 
@@ -161,5 +187,8 @@ while 1:
     root.blit(rootFruits,(0,0))
     root.blit(rootSelCase,(0,0))
     root.blit(rootSelMv,(0,0))
+    root.blit(rootSelDesc,(0,0))
+
+    Descandre()
     pygame.display.update()
     pygame.time.wait(60)
